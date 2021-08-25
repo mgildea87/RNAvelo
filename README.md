@@ -7,7 +7,9 @@ The purpose of this work flow is to run an RNA velocity analysis via scVelo (htt
 	
 	1. .bam files for each scRNA-seq sample.
 		Cellranger automatically outputs sorted and indexed .bam files
-	2. A processed Seurat object (filtering -> dimmensionality reduction)
+	2. Cell barcodes
+		Cell ranger automatically outputs this. It is located here: (filtered_feature_bc_matrix/barcodes.tsv.gz) in each Cellranger folder
+	3. A processed Seurat object (filtering -> dimmensionality reduction)
 		From this object the following will be generated:
 			a. A list of cell ID barcodes (this can be any subset of cells)
 			b. A table of cell ID barcodes vs embedding coordinates (generally from a umap)
