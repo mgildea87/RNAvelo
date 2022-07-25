@@ -60,8 +60,8 @@ def velocity(integrated_loom, seurat):
 	scv.tl.velocity_pseudotime(integrated_loom)
 	scv.tl.velocity_confidence(integrated_loom)
 	scv.tl.terminal_states(integrated_loom)
-	scv.tl.rank_dynamical_genes(integrated_loom, groupby='seurat_clusters')
-	scv.tl.paga(integrated_loom, groups='seurat_clusters')
+	scv.tl.rank_dynamical_genes(integrated_loom, groupby='clusters')
+	scv.tl.paga(integrated_loom, groups='clusters')
 	return(integrated_loom)
 
 #scvelo
@@ -72,27 +72,27 @@ def scVelo_plots(integrated_loom, path, scc, embedding):
 	if not isExist:
 		os.makedirs(path)
 
-	scv.pl.velocity_embedding(integrated_loom,arrow_length=3, arrow_size=2, dpi=1000, basis = embedding, save = '%s%s_embedding.png' % (path, embedding), color = 'seurat_clusters', palette = scc, legend_loc='right')
-	scv.pl.velocity_embedding(integrated_loom,arrow_length=3, arrow_size=2, dpi=1000, basis = embedding, save = '%s%s_embedding.png' % (path, embedding), color = 'seurat_clusters', palette = scc, legend_loc='right')
+	scv.pl.velocity_embedding(integrated_loom,arrow_length=3, arrow_size=2, dpi=1000, basis = embedding, save = '%s%s_embedding.png' % (path, embedding), color = 'clusters', palette = scc, legend_loc='right')
+	scv.pl.velocity_embedding(integrated_loom,arrow_length=3, arrow_size=2, dpi=1000, basis = embedding, save = '%s%s_embedding.png' % (path, embedding), color = 'clusters', palette = scc, legend_loc='right')
 
-	scv.pl.velocity_embedding_stream(integrated_loom, basis = embedding, save = '%sstream_%s_embedding.png' % (path, embedding), color = 'seurat_clusters', palette = scc, min_mass = 1, legend_loc='right', density = 2, linewidth = 0.5)
+	scv.pl.velocity_embedding_stream(integrated_loom, basis = embedding, save = '%sstream_%s_embedding.png' % (path, embedding), color = 'clusters', palette = scc, min_mass = 1, legend_loc='right', density = 2, linewidth = 0.5)
 
-	scv.pl.velocity_embedding_grid(integrated_loom, basis = embedding, save = '%s%s_grid.png' % (path, embedding), color = 'seurat_clusters', palette = scc, min_mass = 1, legend_loc='right')
+	scv.pl.velocity_embedding_grid(integrated_loom, basis = embedding, save = '%s%s_grid.png' % (path, embedding), color = 'clusters', palette = scc, min_mass = 1, legend_loc='right')
 
 	scv.pl.scatter(integrated_loom, color='velocity_pseudotime', cmap='gnuplot', save = '%spseudotime_%s.png' % (path, embedding), legend_loc='right', basis = embedding)
 
 	scv.pl.scatter(integrated_loom, color='latent_time', color_map='gnuplot', size=80, save = '%slatenttime_%s.png' % (path, embedding), legend_loc='right', basis = embedding)
 
 	top_genes = integrated_loom.var['fit_likelihood'].sort_values(ascending=False).index[:300]
-	scv.pl.heatmap(integrated_loom, var_names=top_genes, sortby='latent_time', col_color='seurat_clusters', palette = scc, n_convolve=100, save = '%slatenttime_heatmap.png' % (path))
+	scv.pl.heatmap(integrated_loom, var_names=top_genes, sortby='latent_time', col_color='clusters', palette = scc, n_convolve=100, save = '%slatenttime_heatmap.png' % (path))
 
 	top_genes = integrated_loom.var['fit_likelihood'].sort_values(ascending=False).index
-	scv.pl.scatter(integrated_loom, basis=top_genes[:20], ncols=5, frameon=True, save = '%stop_genes.png' % (path), palette = scc, color = 'seurat_clusters')
+	scv.pl.scatter(integrated_loom, basis=top_genes[:20], ncols=5, frameon=True, save = '%stop_genes.png' % (path), palette = scc, color = 'clusters')
 
 	keys = 'velocity_length', 'velocity_confidence'
 	scv.pl.scatter(integrated_loom, c=keys, cmap='coolwarm', perc=[5, 95], save = '%slength_confidence_%s.png' % (path, embedding), basis = embedding)
 
-	df = integrated_loom.obs.groupby('seurat_clusters')[keys].mean().T
+	df = integrated_loom.obs.groupby('clusters')[keys].mean().T
 	np.savetxt(fname = '%sMean_velocity_confidence_per_cluster.csv' % (path), X = df, delimiter = ',')
 
 	scv.pl.scatter(integrated_loom, color=['root_cells', 'end_points'], save = '%sinfered_terminal_states_%s.png' % (path, embedding), basis = embedding)
@@ -101,17 +101,17 @@ def scVelo_plots(integrated_loom, path, scc, embedding):
 	np.savetxt(fname = '%sranked_dynamical_genes_per_cluster.csv' % (path), X = df, delimiter = ',', fmt = '%s')
 	
 	for cluster in df.columns:
-		scv.pl.scatter(integrated_loom, df[cluster][:20], ncols = 5, ylabel=cluster, frameon=True, palette = scc, color = 'seurat_clusters', save = '%stop20_likelihood_%s.png' % (path, cluster))
+		scv.pl.scatter(integrated_loom, df[cluster][:20], ncols = 5, ylabel=cluster, frameon=True, palette = scc, color = 'clusters', save = '%stop20_likelihood_%s.png' % (path, cluster))
 
-	scv.pl.velocity_graph(integrated_loom, threshold=.1, color='seurat_clusters', palette = scc, save = '%sConnectivity_graph_%s.png' % (path, embedding), basis = embedding)
+	scv.pl.velocity_graph(integrated_loom, threshold=.1, color='clusters', palette = scc, save = '%sConnectivity_graph_%s.png' % (path, embedding), basis = embedding)
 
 	scv.pl.paga(integrated_loom, basis=embedding, size=50, alpha=.1, min_edge_width=2, node_size_scale=1.5, save = '%sdirected_PAGA_%s.png' % (path, embedding))
 	pd.DataFrame.sparse.from_spmatrix(integrated_loom.uns['paga']['transitions_confidence']).to_csv('%sPAGA_transitions_confidence.csv' % (path))
 
 def CellRank(integrated_loom):
 	
-	cr.tl.terminal_states(integrated_loom, cluster_key="seurat_clusters")
-	cr.tl.initial_states(integrated_loom, cluster_key="seurat_clusters")
+	cr.tl.terminal_states(integrated_loom, cluster_key="clusters")
+	cr.tl.initial_states(integrated_loom, cluster_key="clusters")
 	cr.tl.lineages(integrated_loom)
 	cr.tl.lineage_drivers(integrated_loom)
 	return(integrated_loom)
@@ -127,8 +127,8 @@ def CellRankPlots(integrated_loom, path, scc, embedding):
 	cr.pl.initial_states(integrated_loom, palette = scc,discrete=False, save = '%sinitial_states_bycell_%s.png' % (path, embedding), basis = embedding)
 	cr.pl.lineages(integrated_loom, palette = scc,same_plot=False, save = '%slineages_%s.png' % (path, embedding), basis = embedding)
 	cr.pl.lineages(integrated_loom,palette = scc, same_plot=False, save = '%slineages_all_%s.png' % (path, embedding), basis = embedding)
-#	cr.pl.cluster_fates(integrated_loom,mode="paga_pie",cluster_key="seurat_clusters",basis="UMAP", palette = scc, title="directed PAGA", save = '%scellfates_agg_PAGA_%s.png' % (path, embedding))
-#	cr.pl.cluster_fates(integrated_loom,mode="heatmap",cluster_key="seurat_clusters",basis="UMAP", palette = scc, title="directed PAGA", save = '%scellfates_agg_hm_%s.png' % (path, embedding))
+#	cr.pl.cluster_fates(integrated_loom,mode="paga_pie",cluster_key="clusters",basis="UMAP", palette = scc, title="directed PAGA", save = '%scellfates_agg_PAGA_%s.png' % (path, embedding))
+#	cr.pl.cluster_fates(integrated_loom,mode="heatmap",cluster_key="clusters",basis="UMAP", palette = scc, title="directed PAGA", save = '%scellfates_agg_hm_%s.png' % (path, embedding))
 #	cr.pl.lineage_drivers(integrated_loom, lineage="9_Treg Activated", save = '%stop20%s.png' % (path, embedding), n_genes = 20)
 
 def parseArguments():
