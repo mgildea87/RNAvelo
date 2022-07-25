@@ -14,9 +14,9 @@ import math
 
 def main(args):
 
-	integrate_looms(args.sample_obs_file, args.emb_file, args.clus_map_file, args.out_dir, args.sample_ids_file)
+	integrate_looms(args.sample_obs_file, args.emb_file, args.clus_map_file, args.out_dir, args.sample_ids_file, args.sample_dir)
 
-def integrate_looms(sample_obs_file, emb_file, clus_map_file, out_dir, sample_ids_file):
+def integrate_looms(sample_obs_file, emb_file, clus_map_file, out_dir, sample_ids_file, sample_dir):
 	
 	sample_obs = pd.read_csv(sample_obs_file)
 	embeddings = pd.read_csv(emb_file)
@@ -27,7 +27,7 @@ def integrate_looms(sample_obs_file, emb_file, clus_map_file, out_dir, sample_id
 
 	looms = []
 	for i in sample_list:
-		looms.append(load_looms(i, sample_obs))
+		looms.append(load_looms(i, sample_obs, sample_dir))
 		integrated_loom = looms[0].concatenate(looms[1:], index_unique = None)
 
 	#Add dimmensionality reduction coordinates
@@ -47,14 +47,14 @@ def integrate_looms(sample_obs_file, emb_file, clus_map_file, out_dir, sample_id
 	seurat_clusters = seurat_clusters.rename(columns = {'Unnamed: 0':'CellID'})
 	seurat_clusters_ordered = loom_index.merge(seurat_clusters, on = "CellID")
 	seurat_clusters_ordered = seurat_clusters_ordered.iloc[:,1:]
-	integrated_loom.uns['seurat_clusters'] = seurat_clusters_ordered.astype('category').values
-	integrated_loom.obs['seurat_clusters'] = seurat_clusters_ordered.astype('category').values
+	integrated_loom.uns['clusters'] = seurat_clusters_ordered.astype('category').values
+	integrated_loom.obs['clusters'] = seurat_clusters_ordered.astype('category').values
 
 	integrated_loom.write_loom(filename='%sintegrated_loom' % (out_dir), write_obsm_varm=True)
 
-def load_looms(sample, sample_obs):
+def load_looms(sample, sample_obs, sample_dir):
 	cellID = sample_obs[sample_obs['x'].str.contains("%s:" % (sample))]
-	loom = anndata.read_loom("/gpfs/data/giannarellilab/Mike_G/scRNAseq_52021/cellranger_rerun/%s/%s.loom" % (sample, sample))
+	loom = anndata.read_loom("%s/%s/%s.loom" % (sample_dir, sample, sample))
 	loom = loom[np.isin(loom.obs.index, cellID)]
 	loom.var_names_make_unique()
 	return(loom)
@@ -64,11 +64,12 @@ def parseArguments():
 	parser = argparse.ArgumentParser(prog="Make_int_loom", description='')
 	required = parser.add_argument_group('required arguments')
 
-	required.add_argument('-cell_obs', nargs='?', required=True, help='Cell barcode to sample mappings' , dest='sample_obs_file')
-	required.add_argument('-emb', nargs='?', required=True, help='Cell barcode to embedding coordinate mappings. Ive been including 4 different embeddings. This script will add any number of embeddings to the object that are supplied in the embedding file', dest='emb_file')
-	required.add_argument('-clusters', nargs='?', required=True, help='Cell barcode to cluster mapping', dest='clus_map_file')
+	required.add_argument('--cell_obs', nargs='?', required=True, help='Cell barcode to sample mappings' , dest='sample_obs_file')
+	required.add_argument('--emb', nargs='?', required=True, help='Cell barcode to embedding coordinate mappings. Ive been including 4 different embeddings. This script will add any number of embeddings to the object that are supplied in the embedding file', dest='emb_file')
+	required.add_argument('--clusters', nargs='?', required=True, help='Cell barcode to cluster mapping', dest='clus_map_file')
 	required.add_argument('-o', '--output_dir', nargs='?', required=True, help='Output directory for integrated loom', dest='out_dir')
-	required.add_argument('-sample_ids', nargs='?', required=True, help='ids of samples to integrate. Must mach Cellranger directory names' , dest='sample_ids_file')
+	required.add_argument('--sample_ids', nargs='?', required=True, help='ids of samples to integrate. Must mach Cellranger directory names' , dest='sample_ids_file')
+	required.add_argument('--sample_dir', nargs='?', required=True, help='Directory in which individual sample cellranger directories are located' , dest='sample_dir')
 
 	return parser.parse_args()
 
